@@ -1,0 +1,17 @@
+{
+  "state": "The server returned HTTP 502 Bad Gateway during checkout for transaction #8839.",
+  "questions": {
+    "department": {
+      "instructions": "Which department should handle this incident?",
+      "options": ["billing", "devops", "marketing", "logistics"]
+    },
+    "urgency": {
+      "instructions": "Rate the severity level of this issue",
+      "options": ["low", "medium", "high", "critical"]
+    },
+    "escalate": {
+      "instructions": "Requires on-call engineer page",
+      "options": ["yes", "no"]
+    }
+  }
+}
