@@ -1,186 +1,107 @@
-﻿# ⚡ Zheyar AI Labs — Laya Edge Decision Router Benchmark
+# Laya Decision Router Benchmark
 
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](https://fastapi.tiangolo.com/)
-[![CUDA Accelerated](https://img.shields.io/badge/Hardware-CUDA%20GPU-76B900.svg)](https://developer.nvidia.com/cuda-zone)
-[![Tests](https://img.shields.io/badge/Tests-15%20Passing-success.svg)](#running-automated-tests)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Benchmark and local testbed for the Laya RL decision router on CUDA. Includes an autonomous snake test environment with Hamiltonian cycle validation, flood-fill safety checks, and a local web dashboard.
 
-An industrial-grade benchmark and interactive real-time visual showcase for the **Laya RL Decision Engine** running 100% locally on custom GPU hardware. Built by **Zheyar AI Labs**.
+Developed at Zheyar Labs.
 
----
+## Overview
 
-## 🎯 Overview: Decision AI vs Generative AI
+Large language models are too slow for real-time control loops, typically taking 500ms to 2s per step. Laya is a 1.1B parameter policy router tuned with reinforcement learning for discrete, low-latency decisions (under 50ms on a local GPU).
 
-Most developers associate Artificial Intelligence exclusively with Large Language Models (LLMs) like GPT-4 or Claude. However, **generative text models are poorly suited for real-time autonomous systems**:
-* **High Latency:** LLMs take 500ms – 3,000ms to produce tokens.
-* **Non-Deterministic:** Generating text paragraphs introduces hallucinations and parser failures.
-* **High Compute Overhead:** Unviable for edge robotics, autonomous vehicles, or real-time traffic routing.
+In this repository, Laya is tested as the decision engine for an autonomous agent navigating a 2D grid:
+- State descriptions and candidate moves are evaluated each tick.
+- The router returns calibrated probabilities and the selected action.
+- A local safety guardrail (Hamiltonian cycle + flood-fill) verifies that moves do not trap the agent in dead ends.
+
+## Features
+
+- **Local GPU Inference:** Runs completely offline against the local Laya model via FastAPI.
+- **Web Dashboard:** 60fps HTML5 canvas visualization on port 8050 with real-time latency and probability meters. Zero console flicker.
+- **Unbeatable Fallback:** 264-cell precomputed Hamiltonian cycle with cycle-distance shortcuts to guarantee zero collisions.
+- **Test Suite:** 15 unit and integration tests covering pathfinding, cycle continuity, virtual simulation, and guardrail overrides.
+
+## Project Structure
 
 `
-       [ Human / High-Level Planner ]
-                    │
-                    ▼  (Goals / High-Level Context)
-  ┌────────────────────────────────────────────────────────┐
-  │         Laya Decision Engine (1.1B RL Router)          │
-  │   • Sub-50ms Latency on Local GPU                      │
-  │   • Calibrated Probabilities & Action Choice           │
-  │   • Zero Cloud Dependency (Edge AI)                    │
-  └────────────────────────────────────────────────────────┘
-                    │
-                    ▼  (Real-Time Action)
-       [ Autonomous Agent / Hardware / Arena ]
-                    ▲
-                    │  (Guaranteed Safety Guardrail)
-       [ Hamiltonian Cycle & Spatial Verifier ]
+.
+|-- main.py             # FastAPI service wrapping laya.Router
+|-- snake_laya.py       # Game logic, Hamiltonian cycle generator, and CLI runner
+|-- web_dashboard.py    # Local web UI (FastAPI + HTML5 Canvas)
+|-- test_snake.py       # Automated test suite (15 tests)
+|-- benchmark_model.py  # Standalone GPU latency and throughput benchmark
+|-- payload.json        # Example request payload
+|-- static/             # UI assets (logo and local fonts)
+-- requirements.txt    # Python dependencies
 `
 
-**Laya** acts as the **reflex system / cerebellum** of an autonomous agent: given a multi-dimensional state and structured criteria, it predicts the optimal discrete action in **under 50 milliseconds** with calibrated probabilities.
+## Setup and Usage
 
----
+### 1. Requirements
 
-## ✨ Key Features
+- Python 3.10+
+- NVIDIA GPU with CUDA
+- laya package installed in your Python environment
 
-1. **60 FPS Zero-Flicker Visual Web Dashboard:**
-   - Custom dark-mode UI styled with the official **Zheyar Design System** (#0D0B1C Midnight & #D2811F Warm Saffron).
-   - High-performance HTML5 Canvas rendering without terminal screen-clearing flicker.
-   - Real-time telemetry: Live GPU latency, model probability distributions, and spatial safety metrics.
+### 2. Install Dependencies
 
-2. **Graph-Theoretic Safety & Unbeatable Mode:**
-   - **Hamiltonian Cycle:** Precomputed 264-cell closed cycle on the 22×12 playable grid ensuring zero self-collisions.
-   - **Safe Shortcuts:** Takes direct greedy shortcuts toward food only when the cycle distance to the tail is safely preserved.
-   - **Flood Fill Analysis:** Calculates connected free space to reject dead-end pocket moves.
-   - **Virtual Path Lookahead:** Simulates reaching the target and verifies post-eat tail reachability.
-   - **Safety Guardrail:** Intercepts and vetoes suicidal traps if an agent picks a hazardous route.
-
-3. **15-Test Automated Verification Suite:**
-   - Full coverage across geometry, pathfinding, virtual lookahead, Hamiltonian continuity, and Laya integration.
-
----
-
-## 📁 Repository Structure
-
-`	ext
-exp-laya-router/
-├── main.py               # FastAPI backend serving the Laya Router predict endpoint
-├── snake_laya.py         # Autonomous snake engine (Hamiltonian AI + Guardrails)
-├── web_dashboard.py      # Real-time visual dashboard (FastAPI + HTML5 Canvas)
-├── test_snake.py         # 15-test automated unit & integration test suite
-├── benchmark_model.py    # Raw CUDA GPU benchmark utility for Laya
-├── payload.json          # Sample request payload for API testing
-├── static/               # Zheyar brand assets (Logo SVG, Vazirmatn & Space Grotesk fonts)
-├── requirements.txt      # Python dependencies
-└── README.md             # Project documentation
-`
-
----
-
-## 🚀 Step-by-Step Setup Guide
-
-### 1. Prerequisites
-- Python 3.10 or higher
-- NVIDIA GPU with CUDA support (recommended for sub-50ms inference)
-- Git
-
-### 2. Clone and Setup Environment
 `ash
 git clone https://github.com/zheyar-ltd/exp-laya-router.git
 cd exp-laya-router
 
-# Create virtual environment
 python -m venv .venv
-
-# Activate environment (Windows PowerShell)
-.\.venv\Scripts\Activate.ps1
-
-# Activate environment (Linux / macOS)
+# Windows:
+.\.venv\Scripts\activate
+# Linux/macOS:
 # source .venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
 `
 
-> **Note on Laya:** Ensure the laya package is installed in your environment (pip install laya or via your local wheel).
+### 3. Start the Laya API
 
----
-
-### 3. Start the Laya Decision API Server
-Run the local inference server on port 8000:
 `ash
 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
 `
-*API docs available at: http://127.0.0.1:8000/docs*
 
----
+The API docs are available at http://127.0.0.1:8000/docs.
 
-### 4. Launch the Zheyar Visual Web Dashboard
-In a new terminal window:
+### 4. Start the Web Dashboard
+
+In a separate terminal:
+
 `ash
 python web_dashboard.py
 `
-Open your browser at **http://127.0.0.1:8050** to view the live dashboard:
-- Watch the agent make real-time decisions with live probability bars.
-- Toggle between **LAYA AI Mode** and **UNBEATABLE Mode**.
-- Adjust simulation speed or reset the game on the fly.
-- Perfect for screen recording (60fps, zero flicker).
 
----
+Open http://127.0.0.1:8050 in your browser. You can toggle between Laya AI mode and pure Unbeatable mode, adjust tick speed, and watch real-time GPU inference times and probability distributions.
 
-### 5. Run Terminal CLI Modes & Benchmarks
-You can also run the agent directly inside your terminal:
+### 5. Run from Terminal (Headless / CLI)
 
 `ash
-# Run in Laya AI Mode
+# Terminal visual play (Laya AI):
 python snake_laya.py --mode laya --speed 0.06
 
-# Run in Pure Unbeatable Mode (Hamiltonian Cycle)
+# Unbeatable Hamiltonian mode:
 python snake_laya.py --mode unbeatable --speed 0.02
 
-# Run Fast Headless Benchmark (5 games, 1000 steps each)
+# Headless batch benchmark (5 games, 1000 steps each):
 python snake_laya.py --mode benchmark --games 5 --max-steps 1000
 `
 
----
-
-## 🧪 Running Automated Tests
-
-Run the complete test suite using Python''s built-in unittest:
+### 6. Run Tests
 
 `ash
 python -m unittest test_snake.py -v
 `
 
-### Test Coverage Highlights:
-- TestHamiltonianCycle: Verifies 264-cell uniqueness, boundaries, Manhattan adjacency, and cycle distance math.
-- TestGridAndMovement: Verifies collision detection on outer walls and body segments.
-- TestPathfindingAndFloodFill: Tests BFS shortest paths, obstacle detours, and reachable pocket calculations.
-- TestVirtualFoodSimulation: Validates virtual lookahead (safely detecting corner cul-de-sacs).
-- TestHamiltonianShortcuts: Ensures shortcuts never jump past the tail.
-- TestLayaIntegrationAndGuardrails: Confirms guardrail vetoes fatal moves.
-- TestSimulationPerformance: Validates continuous survival for 500+ steps.
+## Benchmark Numbers
 
----
+Measured on local CUDA GPU:
 
-## 📊 Benchmark Results
+- Average inference latency: 40-55 ms per call
+- Throughput: 20-25 decisions per second
+- Survival rate (Unbeatable mode): 100% over 1,000 steps
 
-| Metric | Measurement |
-| :--- | :--- |
-| **Inference Latency** | ~40 – 55 ms (Local CUDA GPU) |
-| **Throughput** | ~20 – 25 decisions/sec |
-| **Unbeatable Survival Rate** | 100% (Zero collisions over 1,000+ steps) |
-| **Average Score (1000 steps)** | ~38 – 42 targets |
-| **Cloud Dependency** | 0% (Fully Offline / On-Premise) |
+## License
 
----
-
-## 🏢 About Zheyar
-
-**Zheyar Ltd** specializes in Edge AI, autonomous agents, and industrial IoT solutions. We engineer hybrid architectures that combine high-level planning with deterministic, low-latency decision routers for real-world mission-critical applications.
-
-- Website: [zheyar.com](https://zheyar.com)
-- Organization: [github.com/zheyar-ltd](https://github.com/zheyar-ltd)
-
----
-
-## 📄 License
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+MIT
