@@ -485,6 +485,9 @@ HTML_CONTENT = """<!DOCTYPE html>
       </div>
     </div>
     <div class="badges">
+      <a href="http://127.0.0.1:8081" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:6px; background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.35); color:#38bdf8; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700;">
+        <span>🧱 Tetris AI (8081) ↗</span>
+      </a>
       <div class="badge"><span class="badge-dot"></span> LOCAL CUDA GPU</div>
       <div class="badge">MODEL: LAYA-RL (1.1B)</div>
       <div class="badge">60 FPS ZERO-FLICKER</div>

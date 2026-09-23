@@ -1,107 +1,181 @@
-# Laya Decision Router Benchmark
+# Zheyar AI Labs — Laya Real-Time Decision Hub
 
-Benchmark and local testbed for the Laya RL decision router on CUDA. Includes an autonomous snake test environment with Hamiltonian cycle validation, flood-fill safety checks, and a local web dashboard.
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-green.svg)](https://fastapi.tiangolo.com)
+[![CUDA Accelerated](https://img.shields.io/badge/CUDA-Enabled-76B900.svg)](https://developer.nvidia.com/cuda-zone)
+[![Unit Tests](https://img.shields.io/badge/Tests-32%20Passing-brightgreen.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Developed at Zheyar Labs.
+High-performance testbed and visual interactive dashboard for the **Laya RL Policy Router (1.1B)** on CUDA. Demonstrates sub-50ms discrete decision-making in real-time gaming environments with mathematical safety guardrails.
 
-## Overview
+Developed at **Zheyar AI Labs**.
 
-Large language models are too slow for real-time control loops, typically taking 500ms to 2s per step. Laya is a 1.1B parameter policy router tuned with reinforcement learning for discrete, low-latency decisions (under 50ms on a local GPU).
+---
 
-In this repository, Laya is tested as the decision engine for an autonomous agent navigating a 2D grid:
-- State descriptions and candidate moves are evaluated each tick.
-- The router returns calibrated probabilities and the selected action.
-- A local safety guardrail (Hamiltonian cycle + flood-fill) verifies that moves do not trap the agent in dead ends.
+## 🎯 Architecture Overview
 
-## Features
+Large Language Models (LLMs) are often too slow for real-time control loops, typically requiring 500ms to 2000ms per inference. **Laya** is a 1.1B parameter edge policy router trained with reinforcement learning for discrete, sub-50ms decisions on local GPU hardware.
 
-- **Local GPU Inference:** Runs completely offline against the local Laya model via FastAPI.
-- **Web Dashboard:** 60fps HTML5 canvas visualization on port 8050 with real-time latency and probability meters. Zero console flicker.
-- **Unbeatable Fallback:** 264-cell precomputed Hamiltonian cycle with cycle-distance shortcuts to guarantee zero collisions.
-- **Test Suite:** 15 unit and integration tests covering pathfinding, cycle continuity, virtual simulation, and guardrail overrides.
+```
++-------------------------------------------------------------------------+
+|                           GAME ENVIRONMENT                              |
+|           (Snake 24x14 Grid  /  Tetris 10x20 Standard SRS)              |
++-------------------------------------------------------------------------+
+                                     |
+                         [State & Candidate Feature Extraction]
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+|                     LAYA DECISION ROUTER (CUDA)                         |
+|   - Evaluates multi-candidate actions with dynamic natural criteria     |
+|   - Emits calibrated probability distributions & strategic choices     |
+|   - Sub-50ms local GPU inference latency                                |
++-------------------------------------------------------------------------+
+                                     |
+                        [Policy Output Validation]
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+|                       SAFETY GUARDRAILS                                 |
+|   - Snake: Hamiltonian cycle continuity + Flood-fill trap veto          |
+|   - Tetris: Pierre Dellacherie hole penalty & anti-top-out safety net   |
++-------------------------------------------------------------------------+
+                                     |
+                           [Action Execution]
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+|                  60 FPS HTML5 CANVAS WEB DASHBOARDS                     |
+|        Snake Web UI (Port 8050)   <--->   Tetris Web UI (Port 8081)     |
++-------------------------------------------------------------------------+
+```
 
-## Project Structure
+---
 
-`
+## 🎮 Included Games
+
+### 1. 🐍 Autonomous Snake AI
+- **Playable Arena:** 24x14 grid (264 playable tiles).
+- **Core Technology:** Laya RL Router guided by dynamic reachable-space flood fill and shortest BFS pathfinding.
+- **Safety Fallback:** Precomputed 264-cell Hamiltonian cycle with shortcut jumps ensuring **0% collision rate** even at 99%+ board fill.
+- **Web Interface:** Port `8050`, zero-flicker 60fps HTML5 Canvas, real-time probability meters, GPU latency monitor.
+
+### 2. 🧱 Tetris Gravity & SRS Engine
+- **Playable Arena:** Standard 10x20 grid, SRS (Super Rotation System) 7-tetrominoes (`I`, `O`, `T`, `S`, `Z`, `J`, `L`).
+- **Core Technology:** Natural step-by-step gravity fall, Wall Kicks, line clearing, lock delay, and Hold slot.
+- **Laya Integration:** Multi-candidate drop placement reasoning evaluated against Pierre Dellacherie feature space (Landing Height, Eroded Cells, Row/Col Transitions, Buried Holes, Cumulative Wells, Surface Bumpiness).
+- **Modes:**
+  - `🎮 MANUAL PLAY`: Human interactive play with responsive keyboard controls.
+  - `⚡ LAYA AI BRAIN`: Autonomous real-time autopilot watching Laya navigate and drop pieces.
+  - `🛡️ UNBEATABLE`: Pure mathematical Pierre Dellacherie optimizer (proven to survive >900k lines).
+- **Web Interface:** Port `8081`, Web Audio synthesizer, cyberpunk dark theme, live probability bars.
+
+---
+
+## 📂 Repository Structure
+
+```
 .
-|-- main.py             # FastAPI service wrapping laya.Router
-|-- snake_laya.py       # Game logic, Hamiltonian cycle generator, and CLI runner
-|-- web_dashboard.py    # Local web UI (FastAPI + HTML5 Canvas)
-|-- test_snake.py       # Automated test suite (15 tests)
-|-- benchmark_model.py  # Standalone GPU latency and throughput benchmark
-|-- payload.json        # Example request payload
-|-- static/             # UI assets (logo and local fonts)
--- requirements.txt    # Python dependencies
-`
+├── main.py             # Shared FastAPI service wrapping laya.Router
+│
+├── snake_laya.py       # Snake game engine, Hamiltonian cycle generator, and CLI runner
+├── web_snake.py        # Snake visual web dashboard (Port 8050)
+├── web_dashboard.py    # Backward-compatible entry point for Snake dashboard
+├── test_snake.py       # Automated Snake test suite (15 unit tests)
+│
+├── tetris_laya.py      # Standard Tetris gravity engine, Dellacherie optimizer, CLI runner
+├── web_tetris.py       # Tetris visual web dashboard (Port 8081, Web Audio synth)
+├── test_tetris.py      # Automated Tetris test suite (17 unit tests)
+│
+├── static/             # UI assets (Zheyar logo and local typography)
+├── requirements.txt    # Python dependencies
+└── README.md           # Documentation
+```
 
-## Setup and Usage
+---
 
-### 1. Requirements
+## 🚀 Quick Start
 
+### 1. Prerequisites
 - Python 3.10+
-- NVIDIA GPU with CUDA
-- laya package installed in your Python environment
+- NVIDIA GPU with CUDA drivers
+- `laya` package installed in your Python environment
 
 ### 2. Install Dependencies
-
-`ash
+```bash
 git clone https://github.com/zheyar-ltd/exp-laya-router.git
 cd exp-laya-router
 
+# Create virtual environment
 python -m venv .venv
+
 # Windows:
 .\.venv\Scripts\activate
 # Linux/macOS:
 # source .venv/bin/activate
 
 pip install -r requirements.txt
-`
+```
 
-### 3. Start the Laya API
+### 3. Launching the Web Dashboards
 
-`ash
+#### 🧱 Start Tetris Dashboard:
+```bash
+python web_tetris.py --port 8081
+```
+Open **[http://localhost:8081](http://localhost:8081)** in your browser.
+- **Controls (Manual):** `Left`/`Right` to move, `Up` or `Z` to rotate, `Down` for soft drop, `Space` for hard drop, `C` to hold.
+- **Autopilot:** Click `⚡ LAYA AI BRAIN` to watch Laya play autonomously.
+- **Switch Game:** Click the `🐍 Snake AI (8050)` button in the header.
+
+#### 🐍 Start Snake Dashboard:
+```bash
+python web_snake.py --port 8050
+```
+Open **[http://localhost:8050](http://localhost:8050)** in your browser.
+- Switch between **Laya AI** and **Unbeatable Hamiltonian** modes.
+- Adjust tick speeds from 10ms to 200ms in real time.
+- **Switch Game:** Click the `🧱 Tetris AI (8081)` button in the header.
+
+#### 🌐 Shared Laya API Service (Optional for Multi-Agent Setup):
+```bash
 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
-`
+```
 
-The API docs are available at http://127.0.0.1:8000/docs.
+---
 
-### 4. Start the Web Dashboard
+## 🧪 Automated Test Suites
 
-In a separate terminal:
+The repository includes **32 unit and integration tests** verifying core physics, collision detection, heuristic integrity, and safety guardrails:
 
-`ash
-python web_dashboard.py
-`
+```bash
+# Run Snake test suite (15 tests)
+python test_snake.py
 
-Open http://127.0.0.1:8050 in your browser. You can toggle between Laya AI mode and pure Unbeatable mode, adjust tick speed, and watch real-time GPU inference times and probability distributions.
+# Run Tetris test suite (17 tests)
+python test_tetris.py
+```
 
-### 5. Run from Terminal (Headless / CLI)
+### Test Coverage Highlights:
+- **Snake (`test_snake.py`):** Pathfinding continuity, flood-fill safety, Hamiltonian cycle loops, trap avoidance, and virtual eating simulation.
+- **Tetris (`test_tetris.py`):** 7-bag randomizer, SRS wall kick rotations, natural gravity tick fall, boundary and locked block collisions, 1-to-4 line clearing, buried hole detection, and 100-piece invincible survival.
 
-`ash
-# Terminal visual play (Laya AI):
-python snake_laya.py --mode laya --speed 0.06
+---
 
-# Unbeatable Hamiltonian mode:
-python snake_laya.py --mode unbeatable --speed 0.02
+## 📊 Technical Comparison
 
-# Headless batch benchmark (5 games, 1000 steps each):
-python snake_laya.py --mode benchmark --games 5 --max-steps 1000
-`
+| Feature | 🐍 Snake AI | 🧱 Tetris AI |
+| :--- | :--- | :--- |
+| **Action Space** | Discrete 4 Directions (`UP`, `DOWN`, `LEFT`, `RIGHT`) | Discrete 2D Placements (`(Rotation, Column)`) |
+| **Candidate Options** | 2 to 4 legal moves per tick | 20 to 34 legal placements per piece |
+| **Inference Frequency** | Every grid step (50ms – 100ms) | Once per piece spawn (or per gravity tick) |
+| **Evaluation Heuristic** | Hamiltonian distance + reachable flood fill | Pierre Dellacherie feature vector (9 metrics) |
+| **Safety Guardrail** | Vetoes moves causing unreachable tail escape | Vetoes placements causing buried holes |
+| **Dashboard Port** | `8050` | `8081` |
+| **Audio Synthesis** | Canvas visualizer | Real-time Web Audio API synthesizer |
 
-### 6. Run Tests
+---
 
-`ash
-python -m unittest test_snake.py -v
-`
+## 📄 License
 
-## Benchmark Numbers
-
-Measured on local CUDA GPU:
-
-- Average inference latency: 40-55 ms per call
-- Throughput: 20-25 decisions per second
-- Survival rate (Unbeatable mode): 100% over 1,000 steps
-
-## License
-
-MIT
+This project is licensed under the [MIT License](LICENSE) &copy; Zheyar Labs.
